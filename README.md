@@ -1,4 +1,4 @@
-# Getting Started with Dot
+# Getting Started with Dot App
 
 This project was bootstrapped with [Vite](https://vitejs.dev/).
 
