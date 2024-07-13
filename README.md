@@ -1,4 +1,4 @@
-# Getting Started with Vite React App
+# Getting Started with Dot
 
 This project was bootstrapped with [Vite](https://vitejs.dev/).
 
@@ -7,7 +7,7 @@ That's why sam.wasm file need to be placed in root of public folder.
 
 ## License
 
-In order to use these components integrated in the samples you will need a license agreement. To obtain it, please contact support@innovatrics.com.
+In order to use these components integrated in the samples you will need a license agreement.
 
 ## Available Scripts
 
@@ -43,6 +43,21 @@ yarn copy-wasm
 or do it manually:
 
 Copy `wasm` folder from `node_modules/@innovatrics/dot-document-auto-capture` or other auto-capture package to `reactjs-components-integration/public` folder.
+
+## Docker 
+
+In the main project directory exists a `Dockerfile` and `docker-compose.yml`. It is required that you have DockerDesktop running in your local-dev environment.
+
+You can run the following Docker commands in the root of the folder:
+
+### `docker build -t my-dot-app .`
+
+This will build the docker image `my-dot-app`.
+
+### `docker run -p 5173:5173 my-dot-app`
+
+This will run the `my-dot-app` image on the [http://localhost:5173](http://localhost:5173).
+
 ## Learn More
 
 You can learn more in the [Vite documentation](https://vitejs.dev/guide/).
