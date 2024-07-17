@@ -120,7 +120,7 @@ function App() {
 
   return (
     <div className={styles.app}>
-      <h1>DOT Web Components Integration</h1>
+      <h1>Jairosoft ImageCapture+OCR</h1>
       {renderStep(step)}
     </div>
   );
