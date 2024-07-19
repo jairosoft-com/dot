@@ -1,5 +1,6 @@
 import styles from "../styles/index.module.css";
 import axios from "axios";
+import FieldForm from "./FieldForm";
 import { 
   useRef, 
   useState, 
@@ -9,29 +10,16 @@ import {
 interface Props {
   photoUrl?: string;
 }
-
-// Define TypeScript types for the API responses
-interface AnalyzeResponse {
-  analyzeResult: {
-    documents: Document[];
-  };
-}
-
 interface Document {
   docType: string;
   confidence?: number;
   fields: { [key: string]: Field };
 }
-
 interface Field {
   valueString?: string;
   valueNumber?: number;
   valueDate?: string;
   confidence?: number;
-}
-
-interface NestedField {
-  valueObject: { [key: string]: Field };
 }
 
 const baseUrl = "https://insurance-card-recognition.cognitiveservices.azure.com";
@@ -102,39 +90,6 @@ function PhotoResult({ photoUrl = "" }: Props) {
     }
   };
 
-  const extractValueStrings = (field: Field | NestedField): { key: string, value: string }[] => {
-    if ('valueString' in field) {
-      return field.valueString ? [{ key: '', value: field.valueString }] : [];
-    } else if ('valueObject' in field) {
-      return Object.entries(field.valueObject)
-        .filter(([_, subField]) => subField.valueString)
-        .map(([key, subField]) => ({
-          key,
-          value: subField.valueString!
-        }));
-    }
-    return [];
-  };
-
-  const renderFields = (fields: { [key: string]: Field | NestedField }) => {
-    return (
-      <>
-        {Object.entries(fields).map(([key, field]) => {
-          const values = extractValueStrings(field);
-          return values.length > 0 ? (
-            <div key={key}>
-              {values.map(({ key: subKey, value }, index) => (
-                <div key={index}>
-                  {subKey ? <strong>{subKey}:</strong> : <strong>{key}:</strong>} {value}
-                </div>
-              ))}
-            </div>
-          ) : null;
-        })}
-      </>
-    );
-  };
-
   useEffect(() => {
     const convertImageToBase64 = () => {
       const img = imageRef.current;
@@ -191,30 +146,24 @@ function PhotoResult({ photoUrl = "" }: Props) {
 
   return (
     <div className={styles.container}>
-      <img ref={imageRef} alt="Web component result" src={photoUrl} />
-    
-      <div>
-        List of Entities Extracted from the Image
-
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
+    <img ref={imageRef} alt="Web component result" src={photoUrl} />
+    <div className={styles.resultContainer}>
+      <h2>List of Entities Extracted from the Image</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        analysisResult && (
           <div>
-            { analysisResult ? (
-              analysisResult.map((doc, index) => (
-                <div key={index}>
-                  <div>
-                    {renderFields(doc.fields)}
-                  </div>
-                </div>
-              ))
+            {analysisResult.length > 0 ? (
+              <FieldForm fields={analysisResult[0].fields} />
             ) : (
               <p>No result available.</p>
             )}
           </div>
-        )}
-      </div>
+        )
+      )}
     </div>
+  </div>
   );
 }
 

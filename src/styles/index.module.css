@@ -16,7 +16,37 @@
   overflow: hidden;
 }
 
+.resultContainer {
+  display: inline-grid;
+}
 .container img {
   margin-top: 1rem;
   max-width: 100%;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.formLabel {
+  font-weight: bold;
+  margin-right: 1rem;
+  flex: 1;
+  text-align: right;
+}
+
+.formInput {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 2;
 }
