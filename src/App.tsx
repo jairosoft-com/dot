@@ -18,10 +18,15 @@ import PhotoResult from "./components/PhotoResult";
 import SmileLiveness from "./components/SmileLiveness";
 import styles from "./styles/index.module.css";
 import { Step } from "./types";
+//PhotoID
+import PhotoIdDocumentCapture from "./components/PhotoId/PhotoIdDocumentCapture";
+import PhotoIdResult from "./components/PhotoId/PhotoIdResult"
 
 function App() {
   const [step, setStep] = useState<Step>(Step.SELECT_COMPONENT);
   const [photoUrl, setPhotoUrl] = useState<string>();
+  const [photoIdUrl, setPhotoIdUrl] = useState<string>();
+
 
   const handlePhotoTaken = <T,>(
     imageData: CallbackImage<T>,
@@ -31,6 +36,22 @@ function App() {
     setPhotoUrl(imageUrl);
   };
 
+  const handlePhotoIdTaken = <T,>(
+    imageData: CallbackImage<T>,
+    content?: Uint8Array,
+  ) => {
+    const imageUrl = URL.createObjectURL(imageData.image);
+    localStorage.setItem("photoId", imageUrl);
+    // Will set PhotoIdUrl later after all steps to be done to scan
+    setPhotoIdUrl(imageUrl);
+  };
+
+  // For PhotoId
+  const handleDocumentPhotoIdTaken: DocumentCallback = (imageData, content) => {
+    handlePhotoIdTaken(imageData, content);
+  };
+
+  // For insurance card
   const handleDocumentPhotoTaken: DocumentCallback = (imageData, content) => {
     handlePhotoTaken(imageData, content);
   };
@@ -63,7 +84,7 @@ function App() {
   }, []);
 
   const handleBackClick = () => {
-    setPhotoUrl(undefined);
+    setPhotoIdUrl(undefined);
     setStep(Step.SELECT_COMPONENT);
   };
 
@@ -72,12 +93,20 @@ function App() {
       case Step.DOCUMENT_CAPTURE:
         return (
           <>
-            <DocumentAutoCapture
+            {/* <DocumentAutoCapture
               onPhotoTaken={handleDocumentPhotoTaken}
               onError={handleError}
               onBackClick={handleBackClick}
             />
-            {photoUrl && <PhotoResult photoUrl={photoUrl} />}
+            {photoUrl && <PhotoResult photoUrl={photoUrl} />} */}
+
+            <PhotoIdDocumentCapture
+              onPhotoTaken={handleDocumentPhotoIdTaken}
+              onError={handleError}
+              onBackClick={handleBackClick}
+            />
+
+            {photoIdUrl && <PhotoIdResult photoUrl={photoIdUrl} />}
           </>
         );
       case Step.FACE_CAPTURE:

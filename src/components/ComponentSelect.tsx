@@ -27,15 +27,6 @@ function ComponentSelect({ setStep }: Props) {
       <button className={styles.primary} onClick={handleDocumentClick}>
         Document
       </button>
-      <button className={styles.primary} onClick={handleFaceClick}>
-        Face
-      </button>
-      <button className={styles.primary} onClick={handleMagnifEyeLivenessClick}>
-        MagnifEye Liveness
-      </button>
-      <button className={styles.primary} onClick={handleSmileLivenessClick}>
-        Smile Liveness
-      </button>
     </div>
   );
 }
