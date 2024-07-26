@@ -9,24 +9,26 @@ import type {
 } from "@innovatrics/dot-face-auto-capture";
 import type { MagnifEyeLivenessCallback } from "@innovatrics/dot-magnifeye-liveness";
 import { SmileLivenessCallback } from "@innovatrics/dot-smile-liveness";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ComponentSelect from "./components/ComponentSelect";
-import DocumentAutoCapture from "./components/DocumentAutoCapture";
+import DocumentAutoCapture from "./components/InsuranceCard/DocumentAutoCapture";
 import FaceAutoCapture from "./components/FaceAutoCapture";
 import MagnifEyeLiveness from "./components/MagnifEyeLiveness";
-import PhotoResult from "./components/PhotoResult";
+import PhotoResult from "./components/InsuranceCard/PhotoResult";
 import SmileLiveness from "./components/SmileLiveness";
 import styles from "./styles/index.module.css";
 import { Step } from "./types";
-//PhotoID
+// PhotoID
 import PhotoIdDocumentCapture from "./components/PhotoId/PhotoIdDocumentCapture";
-import PhotoIdResult from "./components/PhotoId/PhotoIdResult"
+import PhotoIdResult from "./components/PhotoId/PhotoIdResult";
 
 function App() {
   const [step, setStep] = useState<Step>(Step.SELECT_COMPONENT);
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [photoIdUrl, setPhotoIdUrl] = useState<string>();
-
+  const [insuranceCardUrl, setInsuranceCardUrl] = useState<string>();
+  const [isPhotoIdCaptured, setIsPhotoIdCaptured] = useState<boolean>(false);
+  const [isInsuranceCardCaptured, setIsInsuranceCardCaptured] = useState<boolean>(false);
 
   const handlePhotoTaken = <T,>(
     imageData: CallbackImage<T>,
@@ -42,8 +44,9 @@ function App() {
   ) => {
     const imageUrl = URL.createObjectURL(imageData.image);
     localStorage.setItem("photoId", imageUrl);
-    // Will set PhotoIdUrl later after all steps to be done to scan
     setPhotoIdUrl(imageUrl);
+    setIsPhotoIdCaptured(true);
+    setStep(Step.INSURANCE_CARD_CAPTURE);
   };
 
   // For PhotoId
@@ -53,7 +56,10 @@ function App() {
 
   // For insurance card
   const handleDocumentPhotoTaken: DocumentCallback = (imageData, content) => {
-    handlePhotoTaken(imageData, content);
+    const imageUrl = URL.createObjectURL(imageData.image);
+    localStorage.setItem("insuranceCard", imageUrl);
+    setInsuranceCardUrl(imageUrl);
+    setIsInsuranceCardCaptured(true);
   };
 
   const handleFaceCapturePhotoTaken: FaceCallback = (imageData, content) => {
@@ -85,28 +91,28 @@ function App() {
 
   const handleBackClick = () => {
     setPhotoIdUrl(undefined);
+    setInsuranceCardUrl(undefined);
+    setIsPhotoIdCaptured(false);
+    setIsInsuranceCardCaptured(false);
     setStep(Step.SELECT_COMPONENT);
   };
+
+  useEffect(() => {
+    if (isPhotoIdCaptured && isInsuranceCardCaptured) {
+      setStep(Step.RESULTS);
+    }
+  }, [isPhotoIdCaptured, isInsuranceCardCaptured]);
 
   const renderStep = (currentStep: Step) => {
     switch (currentStep) {
       case Step.DOCUMENT_CAPTURE:
         return (
           <>
-            {/* <DocumentAutoCapture
-              onPhotoTaken={handleDocumentPhotoTaken}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-            {photoUrl && <PhotoResult photoUrl={photoUrl} />} */}
-
             <PhotoIdDocumentCapture
               onPhotoTaken={handleDocumentPhotoIdTaken}
               onError={handleError}
               onBackClick={handleBackClick}
             />
-
-            {photoIdUrl && <PhotoIdResult photoUrl={photoIdUrl} />}
           </>
         );
       case Step.FACE_CAPTURE:
@@ -140,6 +146,21 @@ function App() {
               onBackClick={handleBackClick}
             />
             {photoUrl && <PhotoResult photoUrl={photoUrl} />}
+          </>
+        );
+      case Step.INSURANCE_CARD_CAPTURE:
+        return (
+          <DocumentAutoCapture
+            onPhotoTaken={handleDocumentPhotoTaken}
+            onError={handleError}
+            onBackClick={handleBackClick}
+          />
+        );
+      case Step.RESULTS:
+        return (
+          <>
+            <PhotoIdResult photoUrl={photoIdUrl} />
+            <PhotoResult photoUrl={insuranceCardUrl} />
           </>
         );
       default:

@@ -8,8 +8,8 @@ import {
   ControlEventInstruction,
 } from "@innovatrics/dot-document-auto-capture/events";
 import { useState } from "react";
-import styles from "../styles/index.module.css";
-import buttonStyles from "../styles/button.module.css";
+import styles from "../../styles/index.module.css";
+import buttonStyles from "../../styles/button.module.css";
 import DocumentCamera from "./DocumentCamera";
 import DocumentUi from "./DocumentUi";
 

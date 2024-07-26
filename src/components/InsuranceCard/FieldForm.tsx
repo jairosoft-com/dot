@@ -1,4 +1,4 @@
-import styles from '../styles/index.module.css';
+import styles from '../../styles/index.module.css';
 
 // Define the type for the field
 interface Field {
