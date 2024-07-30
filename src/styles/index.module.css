@@ -15,35 +15,44 @@
   position: relative;
   overflow: hidden;
 }
-
 .resultContainer {
   display: inline-grid;
+}
+.photoContainer {
+  display: flex;
+  flex-direction: row; /* Align items in a row */
+  gap: 16px; /* Adjust spacing between items as needed */
+  flex-wrap: wrap; /* Allow wrapping if necessary */
+}
+.photoContainer img {
+  max-width: 57%; /* Ensure images are responsive */
+  height: auto; /* Maintain aspect ratio */
+  flex: 1 1 auto; /* Allow images to grow and shrink */
+}
+.photoContainer div {
+  flex: 1; /* Allow the divs to grow and shrink */
 }
 .container img {
   margin-top: 1rem;
   max-width: 100%;
 }
-
 .formContainer {
   width: 100%;
   max-width: 800px;
   margin-top: 1rem;
 }
-
 .formGroup {
   display: flex;
   flex-direction: row;
   align-items: center;
   margin-bottom: 1rem;
 }
-
 .formLabel {
   font-weight: bold;
   margin-right: 1rem;
   flex: 1;
   text-align: right;
 }
-
 .formInput {
   padding: 0.5rem;
   border: 1px solid #ccc;

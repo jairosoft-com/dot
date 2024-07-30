@@ -4,6 +4,7 @@ import DocumentAutoCapture from "./components/InsuranceCard/DocumentAutoCapture"
 import FaceAutoCapture from "./components/FaceAutoCapture";
 import MagnifEyeLiveness from "./components/MagnifEyeLiveness";
 import PhotoResult from "./components/InsuranceCard/PhotoResult";
+import PhotoResults from "./components/PhotoResults";
 import SmileLiveness from "./components/SmileLiveness";
 import styles from "./styles/index.module.css";
 import { Step } from "./types";
@@ -171,9 +172,10 @@ function App() {
       case Step.RESULTS:
         return (
           <>
-            <PhotoIdResult photoUrl={photoIdUrl} />
-            <PhotoResult photoUrl={insuranceCardUrl} title="Insurance Card Front Side" />
-            <PhotoResult photoUrl={backSideUrl} title="Insurance Card Back Side" />
+            {/* <PhotoIdResult photoUrl={photoIdUrl} /> */}
+            <PhotoResults photoIdUrl={photoIdUrl} insuranceFrontIdUrl={insuranceCardUrl} insuranceBackIdUrl={backSideUrl} />
+            {/* <PhotoResult photoUrl={insuranceCardUrl} title="Insurance Card Front Side" />
+            <PhotoResult photoUrl={backSideUrl} title="Insurance Card Back Side" /> */}
           </>
         );
       default:

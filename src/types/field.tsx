@@ -1,6 +1,7 @@
 export default interface Field {
+  type: string;
   valueString?: string;
-  valueNumber?: number;
-  valueDate?: string;
-  confidence?: number;
+  valueObject?: { [key: string]: Field };
+  valueArray?: Field[];
+  content?: string;
 }

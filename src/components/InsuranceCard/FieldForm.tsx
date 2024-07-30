@@ -1,10 +1,6 @@
+import React from 'react';
 import styles from '../../styles/index.module.css';
-
-// Define the type for the field
-interface Field {
-  valueString?: string;
-  valueObject?: { [key: string]: Field };
-}
+import Field from '../../types/field';
 
 // Define the props for the FieldForm component
 interface FieldFormProps {
@@ -13,11 +9,25 @@ interface FieldFormProps {
 
 // Helper function to extract key-value pairs from fields
 const extractValueStrings = (field: Field, parentKey: string = ''): { key: string; value: string }[] => {
-  if (field.valueString) {
-    return [{ key: parentKey, value: field.valueString }];
-  } else if (field.valueObject) {
+  if (field.valueObject) {
+    // Check if both Amount and Benefit are present
+    if (field.valueObject.Amount && field.valueObject.Benefit) {
+      const amountContent = field.valueObject.Amount.content || '';
+      const benefitContent = field.valueObject.Benefit.content || '';
+      return [{ key: `Copays ${benefitContent}`, value: amountContent }];
+    }
+
+    // Process nested objects
     return Object.entries(field.valueObject)
       .flatMap(([key, subField]) => extractValueStrings(subField, `${parentKey} ${key}`));
+  } else if (field.valueArray) {
+    // Process arrays
+    return field.valueArray.flatMap((subField, index) => 
+      extractValueStrings(subField, `${parentKey} ${index + 1}`));
+  } else if (field.valueString) {
+    return [{ key: parentKey.trim(), value: field.valueString }];
+  } else if (field.content) {
+    return [{ key: parentKey.trim(), value: field.content }];
   }
   return [];
 };
@@ -39,7 +49,7 @@ function FieldForm({ fields }: FieldFormProps) {
       ))}
       {/* Include all fields, even those without valueString */}
       {fields && Object.entries(fields).map(([key, field]) => (
-        !field.valueString && !field.valueObject ? (
+        !field.valueString && !field.valueObject && !field.valueArray && !field.content ? (
           <div key={key} className={styles.formGroup}>
             <label className={styles.formLabel}>{key}</label>
             <input className={styles.formInput} type="text" value="N/A" readOnly />
