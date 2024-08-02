@@ -39,27 +39,30 @@ export async function analyzeDocument(base64: string, isPhotoId: boolean) {
 }
 
 // Function overloads
-export function convertImageToBase64(imageElement: HTMLImageElement | React.RefObject<HTMLImageElement>): string | undefined;
+export function convertImageToBase64(image: Blob): Promise<string | undefined>;
+export function convertImageToBase64(image: React.RefObject<HTMLImageElement>): Promise<string | undefined>;
 
-// Function implementation
-export function convertImageToBase64(imageElement: any): string | undefined {
-  const img = imageElement instanceof HTMLImageElement ? imageElement : imageElement.current;
-
-  if (img) {
+export async function convertImageToBase64(image: Blob | React.RefObject<HTMLImageElement>): Promise<string | undefined> {
+  if (image instanceof Blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(image);
+    });
+  } else if (image.current instanceof HTMLImageElement) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
     if (ctx) {
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      ctx.drawImage(img, 0, 0);
-
-      const base64String = canvas.toDataURL('image/jpeg');
-      return base64String;
+      canvas.width = image.current.naturalWidth;
+      canvas.height = image.current.naturalHeight;
+      ctx.drawImage(image.current, 0, 0);
+      return Promise.resolve(canvas.toDataURL('image/png'));
     }
   }
-  return undefined;
+  return Promise.resolve(undefined);
 }
+
 
 export async function getAnalysisResult(operationLocation: string): Promise<Document[]> {
   try {

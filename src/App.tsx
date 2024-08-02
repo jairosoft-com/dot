@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ComponentSelect from "./components/ComponentSelect";
 import DocumentAutoCapture from "./components/InsuranceCard/DocumentAutoCapture";
 import FaceAutoCapture from "./components/FaceAutoCapture";
@@ -15,17 +15,20 @@ import { dispatchControlEvent, DocumentCustomEvent, ControlEventInstruction } fr
 import { FaceCallback } from "@innovatrics/dot-face-auto-capture/.";
 import { MagnifEyeLivenessCallback } from "@innovatrics/dot-magnifeye-liveness";
 import { SmileLivenessCallback } from "@innovatrics/dot-smile-liveness";
+import  Document from "./types/document";
+import { convertImageToBase64 } from "./utils/utils";
 
 function App() {
   const [step, setStep] = useState<Step>(Step.SELECT_COMPONENT);
-  const [photoUrl, setPhotoUrl] = useState<string>();
-  const [photoIdUrl, setPhotoIdUrl] = useState<string>();
-  const [insuranceCardUrl, setInsuranceCardUrl] = useState<string>();
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>();
+  const [photoIdUrl, setPhotoIdUrl] = useState<string | undefined>();
+  const [insuranceCardUrl, setInsuranceCardUrl] = useState<string | undefined>();
   const [backSideUrl, setBackSideUrl] = useState<string | undefined>();
   const [isPhotoIdCaptured, setIsPhotoIdCaptured] = useState<boolean>(false);
   const [isInsuranceCardCaptured, setIsInsuranceCardCaptured] = useState<boolean>(false);
   const [capturedFrontSide, setCapturedFrontSide] = useState<boolean>(false);
   const [capturedBackSide, setCapturedBackSide] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<Document[]>([]);
 
   const handlePhotoTaken = <T,>(
     imageData: CallbackImage<T>,
@@ -46,24 +49,19 @@ function App() {
     setStep(Step.INSURANCE_CARD_CAPTURE);
   };
 
-  // For PhotoId
   const handleDocumentPhotoIdTaken: DocumentCallback = (imageData, content) => {
     handlePhotoIdTaken(imageData, content);
   };
 
-  // For insurance card
   const handleDocumentPhotoTaken: DocumentCallback = (imageData, content) => {
     const imageUrl = URL.createObjectURL(imageData.image);
 
     if (!capturedFrontSide) {
       // Handle front side
-      localStorage.setItem("insuranceCard", imageUrl);
       setInsuranceCardUrl(imageUrl);
       setCapturedFrontSide(true);
-      // Simulate delay before capturing back side
       setTimeout(() => {
-        setCapturedBackSide(false); // Reset for back side capture
-        // Trigger continuous detection for back side
+        setCapturedBackSide(false);
         dispatchControlEvent(
           DocumentCustomEvent.CONTROL,
           ControlEventInstruction.CONTINUE_DETECTION,
@@ -100,7 +98,7 @@ function App() {
   const handleBackClick = () => {
     setPhotoIdUrl(undefined);
     setInsuranceCardUrl(undefined);
-    setBackSideUrl(undefined); // Reset back side URL
+    setBackSideUrl(undefined);
     setIsPhotoIdCaptured(false);
     setIsInsuranceCardCaptured(false);
     setCapturedFrontSide(false);
@@ -118,13 +116,11 @@ function App() {
     switch (currentStep) {
       case Step.DOCUMENT_CAPTURE:
         return (
-          <>
-            <PhotoIdDocumentCapture
-              onPhotoTaken={handleDocumentPhotoIdTaken}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-          </>
+          <PhotoIdDocumentCapture
+            onPhotoTaken={handleDocumentPhotoIdTaken}
+            onError={handleError}
+            onBackClick={handleBackClick}
+          />
         );
       case Step.FACE_CAPTURE:
         return (
@@ -161,22 +157,20 @@ function App() {
         );
       case Step.INSURANCE_CARD_CAPTURE:
         return (
-          <>
-            <DocumentAutoCapture
-              onPhotoTaken={handleDocumentPhotoTaken}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-          </>
+          <DocumentAutoCapture
+            onPhotoTaken={handleDocumentPhotoTaken}
+            onError={handleError}
+            onBackClick={handleBackClick}
+          />
         );
       case Step.RESULTS:
         return (
-          <>
-            {/* <PhotoIdResult photoUrl={photoIdUrl} /> */}
-            <PhotoResults photoIdUrl={photoIdUrl} insuranceFrontIdUrl={insuranceCardUrl} insuranceBackIdUrl={backSideUrl} />
-            {/* <PhotoResult photoUrl={insuranceCardUrl} title="Insurance Card Front Side" />
-            <PhotoResult photoUrl={backSideUrl} title="Insurance Card Back Side" /> */}
-          </>
+          <PhotoResults
+            photoIdUrl={photoIdUrl}
+            insuranceFrontIdUrl={insuranceCardUrl}
+            insuranceBackIdUrl={backSideUrl}
+            analysisResult={analysisResult}
+          />
         );
       default:
         return <ComponentSelect setStep={setStep} />;

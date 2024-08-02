@@ -1,7 +1,6 @@
 import styles from "../../styles/index.module.css";
 import { useState } from "react";
 
-// Define the type for the field
 interface Field {
   valueString?: string;
   valueObject?: { [key: string]: Field };
@@ -15,12 +14,10 @@ interface Field {
   valueDate?: string;
 }
 
-// Define the props for the FieldForm component
 interface FieldFormProps {
   fields?: { [key: string]: Field };
 }
 
-// Helper function to extract key-value pairs from fields
 const extractValueStrings = (field: Field, parentKey: string = ""): { key: string; value: string }[] => {
   if (field.valueString) {
     return [{ key: parentKey, value: field.valueString }];
@@ -38,8 +35,7 @@ const extractValueStrings = (field: Field, parentKey: string = ""): { key: strin
   return [];
 };
 
-// Component to render the extracted fields in a form
-function PhotoIdFieldForm({ fields }: FieldFormProps) {
+const PhotoIdFieldForm = ({ fields }: FieldFormProps) => {
   // Define the relevant field names
   const relevantFields = ["FirstName", "LastName", "Address", "Sex", "DateOfBirth"];
 
@@ -75,6 +71,6 @@ function PhotoIdFieldForm({ fields }: FieldFormProps) {
       ))}
     </form>
   );
-}
+};
 
 export default PhotoIdFieldForm;

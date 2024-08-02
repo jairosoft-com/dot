@@ -1,14 +1,8 @@
+import React, { useRef, useState, useEffect } from "react";
 import styles from "../styles/index.module.css";
 import PhotoIdFieldForm from "../components/PhotoId/PhotoIdFieldForm";
 import InsuranceCardFieldForm from "../components/InsuranceCard/FieldForm";
-import { 
-  useRef, 
-  useState, 
-  useEffect } from "react";
-import { 
-  analyzeDocument, 
-  convertImageToBase64, 
-  getAnalysisResult } from "../utils/utils";
+import { analyzeDocument, convertImageToBase64, getAnalysisResult } from "../utils/utils";
 import Document from "../types/document";
 
 interface Props {
@@ -16,9 +10,10 @@ interface Props {
   insuranceFrontIdUrl?: string;
   insuranceBackIdUrl?: string;
   title?: string; // Add title prop
+  analysisResult?: Document[]; // Add analysisResult prop
 }
 
-function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackIdUrl = "", title = "" }: Props) { // Destructure title prop
+function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackIdUrl = "", title = "", analysisResult }: Props) { // Destructure title and analysisResult props
   const [analysisResultPhotoId, setAnalysisResultPhotoId] = useState<Document[] | null>(null);
   const [analysisResultFrontCard, setAnalysisResultFrontCard] = useState<Document[] | null>(null);
   const [analysisResultBackCard, setAnalysisResultBackCard] = useState<Document[] | null>(null);
@@ -47,7 +42,7 @@ function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackI
 
           setAnalysisResultPhotoId(documentsPhotoId);
           setAnalysisResultFrontCard(documentsFrontCard);
-          setAnalysisResultBackCard(documentsBackCard)
+          setAnalysisResultBackCard(documentsBackCard);
         }
       } catch (error) {
         console.error('Error analyzing document:', error);
@@ -56,58 +51,35 @@ function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackI
       }
     };
 
-    // Convert image to Base64 when the image loads and then analyze it
-    const imgElementPhotoId = photoIdImgRef.current; // For Photo Id
-    const imgElementFrontCard = insuranceCardFrontImgRef.current; // For Insurance Card Front 
-    const imgElementBackCard = insuranceCardBackImgRef.current; // For Insurance Card Front 
-    if (imgElementPhotoId && imgElementFrontCard && imgElementBackCard) {
-      imgElementPhotoId.onload = () => {
-        const base64String = convertImageToBase64(imgElementPhotoId);
+    const convertAndAnalyzeImage = async (imgRef: React.RefObject<HTMLImageElement>, setBase64: React.Dispatch<React.SetStateAction<string>>) => {
+      if (imgRef.current) {
+        const base64String = await convertImageToBase64(imgRef);
         if (base64String) {
-          setBase64photoId(base64String);
+          const base64WithoutPrefix = base64String.replace(/^data:image\/png;base64,/, '');
+          setBase64(base64WithoutPrefix);
         } else {
           console.error('Failed to convert image to Base64');
         }
-      };
+      }
+    };
 
-      imgElementFrontCard.onload = () => {
-        const base64String = convertImageToBase64(imgElementFrontCard);
-        if (base64String) {
-          setBase64frontCard(base64String);
-        } else {
-          console.error('Failed to convert image to Base64');
-        }
-      };
-
-      imgElementBackCard.onload = () => {
-        const base64String = convertImageToBase64(imgElementBackCard);
-        if (base64String) {
-          setBase64backCard(base64String);
-        } else {
-          console.error('Failed to convert image to Base64');
-        }
-      };
+    if (photoIdImgRef.current && insuranceCardFrontImgRef.current && insuranceCardBackImgRef.current) {
+      convertAndAnalyzeImage(photoIdImgRef, setBase64photoId);
+      convertAndAnalyzeImage(insuranceCardFrontImgRef, setBase64frontCard);
+      convertAndAnalyzeImage(insuranceCardBackImgRef, setBase64backCard);
     }
 
-    // Watch for base64 change to trigger document analysis
     if (base64photoId && base64frontCard && base64backCard) {
       analyzeDocumentData();
     }
-
-    // Cleanup function to remove the onload handler
-    return () => {
-      if (imgElementPhotoId && imgElementFrontCard && imgElementBackCard) {
-        imgElementPhotoId.onload = null;
-        imgElementFrontCard.onload = null;
-        imgElementBackCard.onload = null;
-      }
-    };
-  }, [photoIdUrl, 
-    insuranceFrontIdUrl, 
-    insuranceBackIdUrl, 
-    base64photoId, 
-    base64frontCard, 
-    base64backCard]);
+  }, [
+    photoIdUrl,
+    insuranceFrontIdUrl,
+    insuranceBackIdUrl,
+    base64photoId,
+    base64frontCard,
+    base64backCard,
+  ]);
 
   return (
     <div>
@@ -125,7 +97,6 @@ function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackI
           <img ref={insuranceCardBackImgRef} alt="insurance card back image" src={insuranceBackIdUrl} />
         </div>
       </div>
-
 
       <div className={styles.resultContainer}>
         {loading ? (

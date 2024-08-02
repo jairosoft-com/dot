@@ -5,6 +5,7 @@ import DocumentUi from "./DocumentUi";
 import styles from "../../styles/index.module.css";
 import buttonStyles from "../../styles/button.module.css";
 import { DocumentCallback } from "@innovatrics/dot-document-auto-capture/.";
+import { analyzeDocument, convertImageToBase64, getAnalysisResult } from "../../utils/utils";
 
 interface Props {
   onPhotoTaken: DocumentCallback;
@@ -16,32 +17,47 @@ function DocumentAutoCapture({ onPhotoTaken, onError, onBackClick }: Props) {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [capturingFrontSide, setCapturingFrontSide] = useState(true);
   const [isCapturingBackSide, setIsCapturingBackSide] = useState(false);
+  const [frontSideAnalysis, setFrontSideAnalysis] = useState<any | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string>("");
+  const [attempts, setAttempts] = useState<number>(0);
 
-  const handlePhotoTaken: DocumentCallback = (imageData, content) => {
+  const handlePhotoTaken: DocumentCallback = async (imageData, content) => {
+    const base64Image = await convertImageToBase64(imageData.image);
+  
     if (isCapturingBackSide) {
-      // Handle the back side capture
       onPhotoTaken(imageData, content);
-      // Optionally, handle completion of the back side capture
-      setIsCapturingBackSide(false); // Reset state
-      setCapturingFrontSide(true); // Reset to front side capture
+      setIsCapturingBackSide(false);
+      setCapturingFrontSide(true);
+      setWarningMessage(""); // Clear any previous warning messages
     } else {
-      // Handle the front side capture
-      onPhotoTaken(imageData, content);
-      
-      // Simulate delay before starting back side capture
-      setIsButtonDisabled(true); // Disable the button while waiting
-      setCapturingFrontSide(false); // Indicate we are moving to back side capture
-      setIsCapturingBackSide(true); // Indicate we are capturing the back side
-
-      setTimeout(() => {
-        // Trigger the continuous detection for the back side
-        dispatchControlEvent(
-          DocumentCustomEvent.CONTROL,
-          ControlEventInstruction.CONTINUE_DETECTION
-        );
-        
-        setIsButtonDisabled(false); // Re-enable the button after delay
-      }, 2000); // Adjust the delay as needed
+      if (base64Image) {
+        const operationLocation = await analyzeDocument(base64Image, false);
+        const analysisResult = await getAnalysisResult(operationLocation);
+        setFrontSideAnalysis(analysisResult);
+  
+        const containsInsurerKey = analysisResult.some((doc: any) => doc.fields && "Insurer" in doc.fields);
+  
+        if (containsInsurerKey) {
+          onPhotoTaken(imageData, content);
+          setIsButtonDisabled(true);
+          setCapturingFrontSide(false);
+          setIsCapturingBackSide(true);
+          setWarningMessage(""); // Clear any previous warning messages
+  
+          setTimeout(() => {
+            dispatchControlEvent(
+              DocumentCustomEvent.CONTROL,
+              ControlEventInstruction.CONTINUE_DETECTION
+            );
+            setIsButtonDisabled(false);
+          }, 2000);
+        } else {
+          setWarningMessage("Please capture the front card of the Insurance Card.");
+          setAttempts(attempts + 1); // Increment attempts to force re-render
+        }
+      } else {
+        console.error("Image conversion to base64 failed. Image may be null or undefined.");
+      }
     }
   };
 
@@ -61,9 +77,9 @@ function DocumentAutoCapture({ onPhotoTaken, onError, onBackClick }: Props) {
           Back
         </button>
       </div>
-      {/* parent container must have position: relative */}
       <div className={styles.container}>
         <DocumentCamera
+          key={attempts} // Add key to force re-render
           cameraFacing="environment"
           onPhotoTaken={handlePhotoTaken}
           onError={onError}
@@ -74,6 +90,7 @@ function DocumentAutoCapture({ onPhotoTaken, onError, onBackClick }: Props) {
         {capturingFrontSide && !isCapturingBackSide && <p>Capturing Front Side</p>}
         {!capturingFrontSide && isCapturingBackSide && <p>Capturing Back Side</p>}
       </div>
+      {warningMessage && <div className={styles.warning}>{warningMessage}</div>}
     </>
   );
 }
