@@ -28,9 +28,8 @@ function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackI
   useEffect(() => {
     const analyzeDocumentData = async () => {
       try {
+        setLoading(true);
         if (base64photoId && base64frontCard && base64backCard) {
-          setLoading(true);
-          // parameter true if photoId
           const operationLocationPhotoId = await analyzeDocument(base64photoId, true);
           const documentsPhotoId = await getAnalysisResult(operationLocationPhotoId);
 
@@ -40,13 +39,17 @@ function PhotoResult({ photoIdUrl = "", insuranceFrontIdUrl = "", insuranceBackI
           const operationLocationBackCard = await analyzeDocument(base64backCard, false);
           const documentsBackCard = await getAnalysisResult(operationLocationBackCard);
 
-          setAnalysisResultPhotoId(documentsPhotoId);
-          setAnalysisResultFrontCard(documentsFrontCard);
-          setAnalysisResultBackCard(documentsBackCard);
+          if(documentsPhotoId.length > 0 && 
+              documentsFrontCard.length > 0 && 
+              documentsBackCard.length > 0) {
+            setAnalysisResultPhotoId(documentsPhotoId);
+            setAnalysisResultFrontCard(documentsFrontCard);
+            setAnalysisResultBackCard(documentsBackCard);
+            setLoading(false);
+          }
         }
       } catch (error) {
         console.error('Error analyzing document:', error);
-      } finally {
         setLoading(false);
       }
     };
