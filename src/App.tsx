@@ -1,26 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import ComponentSelect from "./components/ComponentSelect";
 import DocumentAutoCapture from "./components/InsuranceCard/DocumentAutoCapture";
-import FaceAutoCapture from "./components/FaceAutoCapture";
-import MagnifEyeLiveness from "./components/MagnifEyeLiveness";
+import DocumentAutoCaptureBack from "./components/InsuranceCard/DocumentAutoCaptureBack";
 import PhotoResult from "./components/InsuranceCard/PhotoResult";
 import PhotoResults from "./components/PhotoResults";
-import SmileLiveness from "./components/SmileLiveness";
 import styles from "./styles/index.module.css";
 import { Step } from "./types";
 import PhotoIdDocumentCapture from "./components/PhotoId/PhotoIdDocumentCapture";
-import PhotoIdResult from "./components/PhotoId/PhotoIdResult";
 import { CallbackImage, DocumentCallback } from "@innovatrics/dot-document-auto-capture/.";
-import { dispatchControlEvent, DocumentCustomEvent, ControlEventInstruction } from "@innovatrics/dot-document-auto-capture/events";
-import { FaceCallback } from "@innovatrics/dot-face-auto-capture/.";
-import { MagnifEyeLivenessCallback } from "@innovatrics/dot-magnifeye-liveness";
-import { SmileLivenessCallback } from "@innovatrics/dot-smile-liveness";
-import  Document from "./types/document";
-import { convertImageToBase64 } from "./utils/utils";
+import Document from "./types/document";
 
 function App() {
   const [step, setStep] = useState<Step>(Step.SELECT_COMPONENT);
-  const [photoUrl, setPhotoUrl] = useState<string | undefined>();
   const [photoIdUrl, setPhotoIdUrl] = useState<string | undefined>();
   const [insuranceCardUrl, setInsuranceCardUrl] = useState<string | undefined>();
   const [backSideUrl, setBackSideUrl] = useState<string | undefined>();
@@ -28,15 +19,8 @@ function App() {
   const [isInsuranceCardCaptured, setIsInsuranceCardCaptured] = useState<boolean>(false);
   const [capturedFrontSide, setCapturedFrontSide] = useState<boolean>(false);
   const [capturedBackSide, setCapturedBackSide] = useState<boolean>(false);
+  const [showInsuranceCardCaptureFront, setShowInsuranceCardCaptureFront] = useState<boolean>(false);
   const [analysisResult, setAnalysisResult] = useState<Document[]>([]);
-
-  const handlePhotoTaken = <T,>(
-    imageData: CallbackImage<T>,
-    content?: Uint8Array,
-  ) => {
-    const imageUrl = URL.createObjectURL(imageData.image);
-    setPhotoUrl(imageUrl);
-  };
 
   const handlePhotoIdTaken = <T,>(
     imageData: CallbackImage<T>,
@@ -46,49 +30,30 @@ function App() {
     localStorage.setItem("photoId", imageUrl);
     setPhotoIdUrl(imageUrl);
     setIsPhotoIdCaptured(true);
-    setStep(Step.INSURANCE_CARD_CAPTURE);
+    setStep(Step.INSURANCE_CARD_CAPTURE_FRONT);
   };
 
   const handleDocumentPhotoIdTaken: DocumentCallback = (imageData, content) => {
     handlePhotoIdTaken(imageData, content);
   };
 
-  const handleDocumentPhotoTaken: DocumentCallback = (imageData, content) => {
+  const handleDocumentPhotoTakenFront: DocumentCallback = (imageData, content) => {
     const imageUrl = URL.createObjectURL(imageData.image);
 
-    if (!capturedFrontSide) {
-      // Handle front side
-      setInsuranceCardUrl(imageUrl);
-      setCapturedFrontSide(true);
-      setTimeout(() => {
-        setCapturedBackSide(false);
-        dispatchControlEvent(
-          DocumentCustomEvent.CONTROL,
-          ControlEventInstruction.CONTINUE_DETECTION,
-        );
-      }, 2000); // 2 seconds delay before continuing to back side capture
-    } else {
-      // Handle back side
-      setBackSideUrl(imageUrl);
-      setCapturedBackSide(true);
-      setIsInsuranceCardCaptured(true);
-    }
+    // Handle front side
+    setInsuranceCardUrl(imageUrl);
+    setCapturedFrontSide(true);
+    // setStep(Step.INSURANCE_CARD_CAPTURE_BACK);
   };
 
-  const handleFaceCapturePhotoTaken: FaceCallback = (imageData, content) => {
-    handlePhotoTaken(imageData, content);
-  };
+  const handleDocumentPhotoTakenBack: DocumentCallback = (imageData, content) => {
+    const imageUrl = URL.createObjectURL(imageData.image);
 
-  const handleMagnifEyeComplete: MagnifEyeLivenessCallback = (
-    imageData,
-    content,
-  ) => {
-    handlePhotoTaken(imageData, content);
-  };
-
-  const handleSmileComplete: SmileLivenessCallback = (imageData, content) => {
-    const [, smileImageData] = imageData;
-    handlePhotoTaken(smileImageData, content);
+    // Handle back side
+    setBackSideUrl(imageUrl);
+    setCapturedBackSide(true);
+    setIsInsuranceCardCaptured(true);
+    setStep(Step.RESULTS);
   };
 
   const handleError = useCallback((error: Error) => {
@@ -103,7 +68,13 @@ function App() {
     setIsInsuranceCardCaptured(false);
     setCapturedFrontSide(false);
     setCapturedBackSide(false);
+    setShowInsuranceCardCaptureFront(false);
     setStep(Step.SELECT_COMPONENT);
+  };
+
+  const handleContinueDetection = () => {
+    setCapturedFrontSide(false);
+    setStep(Step.INSURANCE_CARD_CAPTURE_BACK);
   };
 
   useEffect(() => {
@@ -111,6 +82,16 @@ function App() {
       setStep(Step.RESULTS);
     }
   }, [isPhotoIdCaptured, isInsuranceCardCaptured]);
+
+  useEffect(() => {
+    if (step === Step.INSURANCE_CARD_CAPTURE_FRONT) {
+      const timer = setTimeout(() => {
+        setShowInsuranceCardCaptureFront(true);
+      }, 2000); // 2 seconds delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
 
   const renderStep = (currentStep: Step) => {
     switch (currentStep) {
@@ -122,45 +103,32 @@ function App() {
             onBackClick={handleBackClick}
           />
         );
-      case Step.FACE_CAPTURE:
+      case Step.INSURANCE_CARD_CAPTURE_FRONT:
         return (
           <>
-            <FaceAutoCapture
-              onPhotoTaken={handleFaceCapturePhotoTaken}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-            {photoUrl && <PhotoResult photoUrl={photoUrl} title="Face Photo" />}
+            {showInsuranceCardCaptureFront ? (
+              capturedFrontSide ? 
+                <PhotoResult 
+                  photoUrl={insuranceCardUrl} 
+                  onBackClick={handleBackClick}
+                  onContinueDetection={handleContinueDetection}
+                /> : 
+                <DocumentAutoCapture
+                  onPhotoTaken={handleDocumentPhotoTakenFront}
+                  onError={handleError}
+                  onBackClick={handleBackClick}
+                />
+            ) : (
+              <div>Loading...</div> // Show a loading message or spinner
+            )}
           </>
         );
-      case Step.MAGNIFEYE_LIVENESS:
+      case Step.INSURANCE_CARD_CAPTURE_BACK:
         return (
-          <>
-            <MagnifEyeLiveness
-              onComplete={handleMagnifEyeComplete}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-            {photoUrl && <PhotoResult photoUrl={photoUrl} title="MagnifEye Liveness" />}
-          </>
-        );
-      case Step.SMILE_LIVENESS:
-        return (
-          <>
-            <SmileLiveness
-              onComplete={handleSmileComplete}
-              onError={handleError}
-              onBackClick={handleBackClick}
-            />
-            {photoUrl && <PhotoResult photoUrl={photoUrl} title="Smile Liveness" />}
-          </>
-        );
-      case Step.INSURANCE_CARD_CAPTURE:
-        return (
-          <DocumentAutoCapture
-            onPhotoTaken={handleDocumentPhotoTaken}
+          <DocumentAutoCaptureBack
+            onPhotoTaken={handleDocumentPhotoTakenBack}
             onError={handleError}
-            onBackClick={handleBackClick}
+            onBackClick={handleBackClick} 
           />
         );
       case Step.RESULTS:

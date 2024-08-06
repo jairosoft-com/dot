@@ -1,21 +1,20 @@
 import styles from "../../styles/index.module.css";
-import FieldForm from "./FieldForm";
-import { 
-  useRef, 
-  useState, 
-  useEffect } from "react";
-import { 
-  analyzeDocument, 
-  convertImageToBase64, 
-  getAnalysisResult } from "../../utils/utils";
+import { useRef, useState, useEffect } from "react";
+import { analyzeDocument, convertImageToBase64, getAnalysisResult } from "../../utils/utils";
 import Document from "../../types/document";
+import buttonStyles from "../../styles/button.module.css";
+import { dispatchControlEvent, DocumentCustomEvent, ControlEventInstruction } from "@innovatrics/dot-document-auto-capture/events";
+import Lottie from "lottie-react";
+import animationData from "../../resources/turn_card.json";
 
 interface Props {
   photoUrl?: string;
-  title?: string; // Add title prop
+  title?: string;
+  onBackClick: () => void;
+  onContinueDetection: () => void;
 }
 
-function PhotoResult({ photoUrl = "", title = "" }: Props) { // Destructure title prop
+function PhotoResult({ photoUrl = "", title = "", onBackClick, onContinueDetection }: Props) {
   const [analysisResult, setAnalysisResult] = useState<Document[] | null>(null);
   const [base64, setBase64] = useState<string>('');
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -26,7 +25,6 @@ function PhotoResult({ photoUrl = "", title = "" }: Props) { // Destructure titl
       try {
         if (base64) {
           setLoading(true);
-          // paramater true if photoId
           const operationLocation = await analyzeDocument(base64, false);
           const documents = await getAnalysisResult(operationLocation);
           setAnalysisResult(documents);
@@ -38,25 +36,26 @@ function PhotoResult({ photoUrl = "", title = "" }: Props) { // Destructure titl
       }
     };
 
-    // Convert image to Base64 when the image loads and then analyze it
     const imgElement = imageRef.current;
     if (imgElement) {
-      imgElement.onload = () => {
-        const base64String = convertImageToBase64(imgElement);
-        if (base64String) {
-          setBase64(base64String);
-        } else {
-          console.error('Failed to convert image to Base64');
+      imgElement.onload = async () => {
+        try {
+          const base64String = await convertImageToBase64(imageRef);
+          if (base64String) {
+            setBase64(base64String);
+          } else {
+            console.error('Failed to convert image to Base64');
+          }
+        } catch (error) {
+          console.error('Error converting image to Base64:', error);
         }
       };
     }
 
-    // Watch for base64 change to trigger document analysis
     if (base64) {
       analyzeDocumentData();
     }
 
-    // Cleanup function to remove the onload handler
     return () => {
       if (imgElement) {
         imgElement.onload = null;
@@ -66,23 +65,28 @@ function PhotoResult({ photoUrl = "", title = "" }: Props) { // Destructure titl
 
   return (
     <div className={styles.container}>
-      <h2>{title}</h2> {/* Display title */}
-      <img ref={imageRef} alt={title} src={photoUrl} />
-      <div className={styles.resultContainer}>
-        <h2>List of Entities Extracted from the Image</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          analysisResult && (
-            <div>
-              {analysisResult.length > 0 ? (
-                <FieldForm fields={analysisResult[0].fields} />
-              ) : (
-                <p>No result available.</p>
-              )}
-            </div>
-          )
-        )}
+      <div className={styles.photoResultContainer}>
+        <div className={styles.photoResultButtons}>
+          <button
+            className={buttonStyles.primary}
+            onClick={() => {
+              dispatchControlEvent(DocumentCustomEvent.CONTROL, ControlEventInstruction.CONTINUE_DETECTION);
+              onContinueDetection(); // Call the callback function when the button is clicked
+            }}
+          >
+            Continue
+          </button>
+          <button className={buttonStyles.primary} onClick={onBackClick}>
+            Back
+          </button>
+        </div>
+        <div className={styles.photoResultGif}>
+          <Lottie animationData={animationData} loop={true} autoplay={true} />
+          <span className={styles.photoResultGifLabel}>Turn Card</span>
+        </div>
+        <div>
+          <img className={ styles.photoResultImg } ref={imageRef} alt={title} src={photoUrl} />
+        </div>
       </div>
     </div>
   );

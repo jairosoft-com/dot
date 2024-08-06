@@ -1,6 +1,5 @@
 import type {
   DocumentCallback,
-  DocumentComponentData,
 } from "@innovatrics/dot-document-auto-capture";
 import {
   dispatchControlEvent,

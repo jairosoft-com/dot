@@ -37,8 +37,8 @@ function PhotoIdResult({ photoUrl = "" }: Props) {
     // Convert image to Base64 when the image loads and then analyze it
     const imgElement = imageRef.current;
     if (imgElement) {
-      imgElement.onload = () => {
-        const base64String = convertImageToBase64(imgElement);
+      imgElement.onload = async () => {
+        const base64String = await convertImageToBase64({ current: imgElement });
         if (base64String) {
           setBase64(base64String);
         } else {

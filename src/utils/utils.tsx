@@ -37,8 +37,6 @@ export async function analyzeDocument(base64: string, isPhotoId: boolean) {
     throw error;
   }
 }
-
-// Function overloads
 export function convertImageToBase64(image: Blob): Promise<string | undefined>;
 export function convertImageToBase64(image: React.RefObject<HTMLImageElement>): Promise<string | undefined>;
 
@@ -57,12 +55,14 @@ export async function convertImageToBase64(image: Blob | React.RefObject<HTMLIma
       canvas.width = image.current.naturalWidth;
       canvas.height = image.current.naturalHeight;
       ctx.drawImage(image.current, 0, 0);
-      return Promise.resolve(canvas.toDataURL('image/png'));
+      const dataUrl = canvas.toDataURL('image/png');
+      // Remove Base64 prefix
+      const base64Prefix = 'data:image/png;base64,';
+      return Promise.resolve(dataUrl.replace(base64Prefix, ''));
     }
   }
   return Promise.resolve(undefined);
 }
-
 
 export async function getAnalysisResult(operationLocation: string): Promise<Document[]> {
   try {

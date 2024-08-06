@@ -18,6 +18,30 @@
 .resultContainer {
   display: inline-grid;
 }
+.photoResultContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.photoResultGif {
+  width: 20%;
+  position: absolute;
+  top: 23px;
+}
+.photoResultGifLabel {
+  color: white;
+  font-weight: bold;
+  top: 62px;
+  left: 1px;
+  width: 100%;
+  position: absolute;
+  font-size: small;
+}
+.photoResultButtons {
+  position: absolute;
+  top: 261px;
+}
 .photoContainer {
   display: flex;
   flex-direction: row; /* Align items in a row */
@@ -61,6 +85,16 @@
 }
 .warning {
   color: red;
+}
+
+.photoResultContainer {
+  text-align: center;
+}
+
+.photoResultImg{
+  margin-top: 20px;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Extra small devices (phones, 600px and down) */

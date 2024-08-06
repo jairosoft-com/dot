@@ -22,7 +22,9 @@ function DocumentCamera(props: DocumentCameraProps) {
     }
   });
   // 1. Return empty custom web-component html TAG
-  return <x-dot-document-auto-capture id="x-dot-document-auto-capture" />;
+  return (
+      <x-dot-document-auto-capture id="x-dot-document-auto-capture" />
+  );
 }
 
 export default DocumentCamera;
